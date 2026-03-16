@@ -138,6 +138,7 @@ def collect_inputs():
     header("1. Lease Basics")
     data["tenant"]   = prompt("Tenant name")
     data["property"] = prompt("Property name / address")
+    data["prefix"]   = prompt("Short property prefix for calendar (e.g. 'Centre Plaza')", required=False)
     data["suite"]    = prompt("Suite / unit", required=False)
     data["rsf"]      = prompt("Square footage (RSF)", required=False)
 
@@ -178,16 +179,17 @@ def collect_inputs():
 # ── Event builder ──────────────────────────────────────────────────────────────
 
 def build_events(d):
-    events = []
+    events   = []
     tenant   = d["tenant"]
     prop     = d["property"]
+    prefix   = f"{d['prefix']} | " if d.get("prefix") else ""
     suite    = f", {d['suite']}" if d.get("suite") else ""
     rsf_info = f", {d['rsf']} RSF" if d.get("rsf") else ""
     location = f"{prop}{suite}{rsf_info}"
 
     # 1. Commencement
     events.append(make_event(
-        summary     = f"🏢 {tenant} — Lease Commencement",
+        summary     = f"{prefix}{tenant} — Lease Commencement",
         start       = d["commencement"],
         description = (
             f"Tenant: {tenant}\n"
@@ -201,7 +203,7 @@ def build_events(d):
     # 2. Rent commencement (if different)
     if d.get("rent_commencement") and d["rent_commencement"] != d["commencement"]:
         events.append(make_event(
-            summary     = f"💰 {tenant} — Rent Commencement",
+            summary     = f"{prefix}{tenant} — Rent Commencement",
             start       = d["rent_commencement"],
             description = (
                 f"First day rent is due under the lease.\n"
@@ -214,7 +216,7 @@ def build_events(d):
     # 3. Abatement end
     if d.get("abatement_end"):
         events.append(make_event(
-            summary     = f"📅 {tenant} — Rent Abatement Ends",
+            summary     = f"{prefix}{tenant} — Rent Abatement Ends",
             start       = d["abatement_end"],
             description = (
                 f"Rent abatement period ends. Full rent due starting the following month.\n"
@@ -231,7 +233,7 @@ def build_events(d):
         space   = d.get("rofr_space") or "as specified in lease"
         ex_days = d.get("rofr_exercise_days", "10")
         events.append(make_event(
-            summary     = f"⚠️ {tenant} — ROFR {min_months}-Month Warning",
+            summary     = f"{prefix}{tenant} — ROFR {min_months}-Month Warning",
             start       = rofr_warning,
             description = (
                 f"After this date fewer than {min_months} months remain on the lease.\n"
@@ -251,7 +253,7 @@ def build_events(d):
         options_note  = d.get("renewal_options") or "See lease"
         rate_note     = d.get("renewal_rate_note") or "To be negotiated"
         events.append(make_event(
-            summary     = f"📋 {tenant} — Begin Renewal Discussions",
+            summary     = f"{prefix}{tenant} — Begin Renewal Discussions",
             start       = discuss_start,
             description = (
                 f"Recommended start of renewal negotiations.\n"
@@ -266,7 +268,7 @@ def build_events(d):
 
         # 6. Renewal deadline
         events.append(make_event(
-            summary     = f"🚨 {tenant} — Renewal Option Deadline",
+            summary     = f"{prefix}{tenant} — Renewal Option Deadline",
             start       = deadline,
             description = (
                 f"LAST DAY to deliver written notice exercising the renewal option.\n"
@@ -282,7 +284,7 @@ def build_events(d):
     # 7. Purchase option deadline
     if d.get("option_to_purchase"):
         events.append(make_event(
-            summary     = f"🏷️ {tenant} — Purchase Option Deadline",
+            summary     = f"{prefix}{tenant} — Purchase Option Deadline",
             start       = d["option_to_purchase"],
             description = (
                 f"Last day to exercise the purchase option under the lease.\n"
@@ -295,7 +297,7 @@ def build_events(d):
     # 8. Custom date
     if d.get("custom_date") and d.get("custom_date_label"):
         events.append(make_event(
-            summary     = f"📌 {tenant} — {d['custom_date_label']}",
+            summary     = f"{prefix}{tenant} — {d['custom_date_label']}",
             start       = d["custom_date"],
             description = (
                 f"{d['custom_date_label']}\n"
@@ -315,7 +317,7 @@ def build_events(d):
         # Calculate years remaining at this anniversary
         years_left = round((expiry - ann_date).days / 365.25, 1)
         events.append(make_event(
-            summary     = f"📆 {tenant} — Lease Anniversary (Year {year_num})",
+            summary     = f"{prefix}{tenant} — Lease Anniversary (Year {year_num})",
             start       = ann_date,
             description = (
                 f"Year {year_num} lease anniversary — reach out to the tenant.\n\n"
@@ -337,7 +339,7 @@ def build_events(d):
 
     # 10. Lease expiration — always last
     events.append(make_event(
-        summary     = f"🔴 {tenant} — Lease Expiration",
+        summary     = f"{prefix}{tenant} — Lease Expiration",
         start       = d["expiration"],
         description = (
             f"Final day of the lease term.\n\n"
